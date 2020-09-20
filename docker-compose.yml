@@ -1,0 +1,53 @@
+version: '3.7'
+
+services:
+    web:
+        build: .
+        command: gunicorn hackerNewsProject.wsgi:application --bind 0.0.0.0:8000 -w 2 --timeout 120
+        # command: python /code/manage.py runserver 0.0.0.0:8000
+        volumes:
+            - .:/code
+        environment: 
+            - SECRET_KEY=_++9)_n%m3%lg2kx6ru32j_o1rx83r53#n9f8mrc4_+923g!(3
+            - DEBUG=1
+            - ENVIRONMENT=development
+        ports: 
+            - 8000:8000
+        depends_on: 
+            - db
+            - redis
+
+    db: 
+        image: postgres:11
+        environment: 
+            - POSTGRES_DB=postgres
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+        volumes: 
+            - postgres_data:/var/lib/postgresql/data/
+
+    redis: 
+        image: redis:alpine
+
+    celery:
+        command: celery -A hackerNewsProject worker -l info
+        build: .
+        volumes: 
+            - .:/code
+        environment:
+            - SECRET_KEY=_++9)_n%m3%lg2kx6ru32j_o1rx83r53#n9f8mrc4_+923g!(3
+        depends_on:
+            - redis
+    
+    celery_beat:
+        command: celery -A hackerNewsProject beat -l info
+        build: .
+        volumes:
+            - .:/code
+        environment:
+            - SECRET_KEY=_++9)_n%m3%lg2kx6ru32j_o1rx83r53#n9f8mrc4_+923g!(3
+        depends_on:
+            - redis
+
+volumes:
+    postgres_data:
